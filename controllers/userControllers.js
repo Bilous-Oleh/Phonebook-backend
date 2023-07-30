@@ -35,6 +35,44 @@ const signupController = async (req, res) => {
   });
 };
 
+const loginController = async (req, res) => {
+  const { email, password } = req.body;
+  const currentUser = await User.findOne({ email });
+  if (!currentUser) {
+    res.status(401).json({
+      message: "Email or password is incorrect",
+    });
+  }
+
+  const { _id: id } = currentUser;
+
+  const comparedPswrd = await currentUser.comparePassword(password);
+  if (!comparedPswrd) {
+    res.status(401).json({
+      message: "Email or password is incorrect",
+    });
+  }
+
+  const payload = {
+    id: id,
+  };
+
+  const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h" });
+
+  const { name } = await User.findById(id);
+
+  await User.findByIdAndUpdate(id, { token });
+
+  res.status(200).json({
+    token,
+    user: {
+      name,
+      email,
+    },
+  });
+};
+
 module.exports = {
   signupController,
+  loginController,
 };
