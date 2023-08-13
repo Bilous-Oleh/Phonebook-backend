@@ -72,7 +72,22 @@ const loginController = async (req, res) => {
   });
 };
 
+const logOutController = async (req, res) => {
+  const {_id} = req.user
+  await User.findByIdAndUpdate(_id, {token:""});
+  res.status(204).json({
+    message: `User is logout`
+  })
+}
+
+const currentController = (req, res) => {
+  const {name, email} = req.user
+  res.json({name, email})
+}
+
 module.exports = {
   signupController,
   loginController,
+  logOutController,
+  currentController
 };
