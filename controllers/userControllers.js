@@ -1,5 +1,7 @@
 const User = require("../db/models/userModel");
 const jwt = require("jsonwebtoken");
+const path = require("path");
+const fs = require("fs/promises");
 const { SECRET_KEY } = process.env;
 
 const signupController = async (req, res) => {
@@ -73,21 +75,39 @@ const loginController = async (req, res) => {
 };
 
 const logOutController = async (req, res) => {
-  const {_id} = req.user
-  await User.findByIdAndUpdate(_id, {token:""});
+  const { _id } = req.user;
+  await User.findByIdAndUpdate(_id, { token: "" });
   res.status(204).json({
-    message: `User is logout`
-  })
-}
+    message: `User is logout`,
+  });
+};
 
 const currentController = (req, res) => {
-  const {name, email} = req.user
-  res.json({name, email})
-}
+  const { name, email } = req.user;
+  res.json({ name, email });
+};
+
+const updateAvatar = async (req, res) => {
+  const { _id } = req.user;
+  const { path: tempPath, originalname } = req.file;
+  const newName = `${_id}_${originalname}`;
+  const avatarDir = path.join(__dirname, "../", "public", "avatars");
+
+  const resultDir = path.join(avatarDir, newName);
+
+  await fs.rename(tempPath, resultDir);
+
+  const avatarURL = path.join("avatars", newName);
+
+  await User.findByIdAndUpdate(_id, { avatarURL });
+
+  res.json({ avatarURL });
+};
 
 module.exports = {
   signupController,
   loginController,
   logOutController,
-  currentController
+  currentController,
+  updateAvatar,
 };
