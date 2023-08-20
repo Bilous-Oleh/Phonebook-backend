@@ -4,6 +4,8 @@ const path = require("path");
 const fs = require("fs/promises");
 const { SECRET_KEY } = process.env;
 
+const gravatar = require("gravatar");
+
 const signupController = async (req, res) => {
   const { name, email, password } = req.body;
   const currentUser = await User.findOne({ email });
@@ -12,10 +14,12 @@ const signupController = async (req, res) => {
     return;
   }
 
+  const avatar = gravatar.url(email);
   const newUser = new User({
     name,
     email,
     password,
+    avatar,
   });
   await newUser.hashPassword(password);
   await newUser.save();
@@ -33,26 +37,29 @@ const signupController = async (req, res) => {
     user: {
       name,
       email,
+      avatar,
     },
   });
 };
 
 const loginController = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password,  } = req.body;
   const currentUser = await User.findOne({ email });
   if (!currentUser) {
     res.status(401).json({
       message: "Email or password is incorrect",
     });
+    return;
   }
 
-  const { _id: id } = currentUser;
+  const { _id: id, avatar } = currentUser;
 
   const comparedPswrd = await currentUser.comparePassword(password);
   if (!comparedPswrd) {
     res.status(401).json({
       message: "Email or password is incorrect",
     });
+    return;
   }
 
   const payload = {
@@ -70,6 +77,7 @@ const loginController = async (req, res) => {
     user: {
       name,
       email,
+      avatar,
     },
   });
 };
@@ -83,8 +91,8 @@ const logOutController = async (req, res) => {
 };
 
 const currentController = (req, res) => {
-  const { name, email } = req.user;
-  res.json({ name, email });
+  const { name, email, avatar, } = req.user;
+  res.json({ name, email, avatar, });
 };
 
 const updateAvatar = async (req, res) => {
